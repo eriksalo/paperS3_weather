@@ -63,6 +63,7 @@ private:
     // Utility functions
     String getDayName(time_t timestamp);
     String formatTime(time_t timestamp);
+    String formatHourlyTime(time_t timestamp);
     String formatDate(time_t timestamp);
     bool isNightTime(time_t timestamp, time_t sunrise, time_t sunset);
     String capitalizeFirst(const String& str);

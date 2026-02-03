@@ -210,12 +210,12 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
     for (int i = 0; i < cols && i < count; i++) {
         int colX = startX + i * colWidth + colWidth / 2;
 
-        // Time label
+        // Time label - show actual time
         String timeLabel;
         if (i == 0) {
             timeLabel = "Now";
         } else {
-            timeLabel = "+" + String(i * 3) + "h";
+            timeLabel = formatHourlyTime(hourly[i].timestamp);
         }
 
         M5.Display.setTextDatum(TC_DATUM);
@@ -595,6 +595,22 @@ String DisplayManager::formatTime(time_t timestamp) {
     if (hour == 0) hour = 12;
     sprintf(buffer, "%d:%02d %s", hour, timeinfo->tm_min, ampm);
     return String(buffer);
+}
+
+String DisplayManager::formatHourlyTime(time_t timestamp) {
+    struct tm* timeinfo = localtime(&timestamp);
+    int hour = timeinfo->tm_hour;
+
+    // Special cases for noon and midnight
+    if (hour == 0) return "12am";
+    if (hour == 12) return "Noon";
+
+    // Format as compact time
+    if (hour < 12) {
+        return String(hour) + "am";
+    } else {
+        return String(hour - 12) + "pm";
+    }
 }
 
 String DisplayManager::formatDate(time_t timestamp) {
