@@ -603,7 +603,7 @@ String DisplayManager::formatHourlyTime(time_t timestamp) {
 
     // Special cases for noon and midnight
     if (hour == 0) return "12am";
-    if (hour == 12) return "Noon";
+    if (hour == 12) return "noon";
 
     // Format as compact time
     if (hour < 12) {
