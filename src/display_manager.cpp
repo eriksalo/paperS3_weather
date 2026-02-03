@@ -9,10 +9,10 @@
 DisplayManager::DisplayManager() {
     // Calculate section positions for 540x960 portrait
     headerY = 0;
-    currentY = 60;           // After header
-    hourlyY = 370;           // After current weather
-    dailyY = 510;            // After hourly
-    footerY = SCREEN_H - 40; // Bottom footer
+    currentY = 70;           // After header
+    hourlyY = 400;           // After current weather
+    dailyY = 540;            // After hourly
+    footerY = SCREEN_H - 50; // Bottom footer
 }
 
 void DisplayManager::begin() {
@@ -27,9 +27,8 @@ void DisplayManager::begin() {
     M5.Display.setEpdMode(epd_mode_t::epd_quality);
     Serial.println("  EPD mode set to quality");
 
-    // Set default text settings - use simple font
-    M5.Display.setFont(&fonts::Font0);
-    M5.Display.setTextSize(1);
+    // Set default text settings - use elegant serif font
+    M5.Display.setFont(&fonts::FreeSerif12pt7b);
     M5.Display.setTextColor(TFT_BLACK, TFT_WHITE);
     M5.Display.setTextDatum(TL_DATUM);
     Serial.println("  Text settings configured");
@@ -66,15 +65,19 @@ void DisplayManager::renderError(const String& message) {
     int centerX = SCREEN_W / 2;
     int centerY = SCREEN_H / 2;
 
+    // Decorative border
+    M5.Display.drawRoundRect(50, centerY - 100, SCREEN_W - 100, 200, 10, TFT_BLACK);
+    M5.Display.drawRoundRect(52, centerY - 98, SCREEN_W - 104, 196, 8, TFT_BLACK);
+
     M5.Display.setTextDatum(MC_DATUM);
-    M5.Display.setTextSize(4);
+    M5.Display.setFont(&fonts::FreeSerifBold18pt7b);
     M5.Display.drawString("Error", centerX, centerY - 50);
 
-    M5.Display.setTextSize(2);
+    M5.Display.setFont(&fonts::FreeSerif12pt7b);
     M5.Display.drawString(message.c_str(), centerX, centerY + 10);
 
-    M5.Display.setTextSize(2);
-    M5.Display.drawString("Will retry in 5 minutes", centerX, centerY + 50);
+    M5.Display.setFont(&fonts::FreeSerif9pt7b);
+    M5.Display.drawString("Will retry in 5 minutes", centerX, centerY + 55);
 
     M5.Display.setTextDatum(TL_DATUM);
     update();
@@ -83,87 +86,115 @@ void DisplayManager::renderError(const String& message) {
 void DisplayManager::renderStatus(const String& message) {
     clear();
 
+    int centerX = SCREEN_W / 2;
+    int centerY = SCREEN_H / 2;
+
+    // Decorative elements
+    M5.Display.drawLine(centerX - 100, centerY - 40, centerX + 100, centerY - 40, TFT_BLACK);
+    M5.Display.drawLine(centerX - 80, centerY + 40, centerX + 80, centerY + 40, TFT_BLACK);
+
     M5.Display.setTextDatum(MC_DATUM);
-    M5.Display.setTextSize(4);
-    M5.Display.drawString(message.c_str(), SCREEN_W / 2, SCREEN_H / 2);
+    M5.Display.setFont(&fonts::FreeSerifBold18pt7b);
+    M5.Display.drawString(message.c_str(), centerX, centerY);
     M5.Display.setTextDatum(TL_DATUM);
-    M5.Display.setTextSize(2);
 
     update();
 }
 
 void DisplayManager::renderHeader() {
-    // Battery indicator (left side)
-    int batteryLevel = M5.Power.getBatteryLevel();
-    M5.Display.setTextSize(2);
+    // Elegant header with decorative elements
 
-    // Draw battery outline
-    int batX = 15;
-    int batY = 15;
-    M5.Display.drawRect(batX, batY, 40, 20, TFT_BLACK);
-    M5.Display.fillRect(batX + 40, batY + 5, 5, 10, TFT_BLACK);
+    // Battery indicator (left side) - stylized
+    int batteryLevel = M5.Power.getBatteryLevel();
+    int batX = 20;
+    int batY = 22;
+
+    // Rounded battery outline
+    M5.Display.drawRoundRect(batX, batY, 44, 22, 3, TFT_BLACK);
+    M5.Display.drawRoundRect(batX + 1, batY + 1, 42, 20, 2, TFT_BLACK);
+    M5.Display.fillRoundRect(batX + 44, batY + 6, 6, 10, 2, TFT_BLACK);
 
     // Fill based on battery level
-    int fillWidth = (batteryLevel * 36) / 100;
+    int fillWidth = (batteryLevel * 38) / 100;
     if (fillWidth > 0) {
-        M5.Display.fillRect(batX + 2, batY + 2, fillWidth, 16, TFT_BLACK);
+        M5.Display.fillRoundRect(batX + 3, batY + 3, fillWidth, 16, 2, TFT_BLACK);
     }
 
-    // Battery percentage
-    M5.Display.drawString(String(batteryLevel) + "%", batX + 50, batY + 2);
+    // Battery percentage with elegant font
+    M5.Display.setFont(&fonts::FreeSerif9pt7b);
+    M5.Display.drawString(String(batteryLevel) + "%", batX + 55, batY + 3);
 
-    // Location name (center)
+    // Location name (center) - large elegant serif
     M5.Display.setTextDatum(TC_DATUM);
-    M5.Display.setTextSize(4);
-    M5.Display.drawString(LOCATION_NAME, SCREEN_W / 2, 6);
-    M5.Display.setTextDatum(TL_DATUM);
+    M5.Display.setFont(&fonts::FreeSerifBold18pt7b);
+    M5.Display.drawString(LOCATION_NAME, SCREEN_W / 2, 12);
 
     // Current time (right side)
     time_t now;
     time(&now);
     String timeStr = formatTime(now);
-    M5.Display.setTextSize(2);
-    int timeWidth = M5.Display.textWidth(timeStr.c_str());
-    M5.Display.drawString(timeStr.c_str(), SCREEN_W - timeWidth - 15, 15);
+    M5.Display.setFont(&fonts::FreeSerif12pt7b);
+    M5.Display.setTextDatum(TR_DATUM);
+    M5.Display.drawString(timeStr.c_str(), SCREEN_W - 20, 20);
+    M5.Display.setTextDatum(TL_DATUM);
 
-    // Separator line
-    M5.Display.drawLine(0, 52, SCREEN_W, 52, TFT_BLACK);
+    // Decorative double line separator
+    M5.Display.drawLine(30, 60, SCREEN_W - 30, 60, TFT_BLACK);
+    M5.Display.drawLine(60, 64, SCREEN_W - 60, 64, TFT_BLACK);
 }
 
 void DisplayManager::renderCurrentWeather(CurrentWeather& current) {
     int centerX = SCREEN_W / 2;
-    int y = currentY + 10;
+    int y = currentY + 15;
 
-    // Weather icon (centered)
-    int iconSize = 90;
+    // Weather icon (centered) - larger and more detailed
+    int iconSize = 120;
     drawWeatherIcon(centerX - iconSize / 2, y, iconSize, current.weatherId,
                     isNightTime(current.timestamp, current.sunrise, current.sunset));
-    y += iconSize + 15;
+    y += iconSize + 20;
 
-    // Temperature (large)
+    // Temperature - elegant large serif with degree symbol
     M5.Display.setTextDatum(MC_DATUM);
-    M5.Display.setTextSize(8);
-    String tempStr = String((int)round(current.temp)) + "F";
-    M5.Display.drawString(tempStr.c_str(), centerX, y);
-    y += 70;
+    M5.Display.setFont(&fonts::FreeSerifBold24pt7b);
+    String tempStr = String((int)round(current.temp));
+    M5.Display.drawString(tempStr.c_str(), centerX - 15, y);
 
-    // Description
-    M5.Display.setTextSize(4);
+    // Degree symbol and F
+    M5.Display.setFont(&fonts::FreeSerif18pt7b);
+    int tempWidth = M5.Display.textWidth(tempStr.c_str());
+    M5.Display.drawString("o", centerX + tempWidth/2 - 5, y - 25);
+    M5.Display.setFont(&fonts::FreeSerifBold18pt7b);
+    M5.Display.drawString("F", centerX + tempWidth/2 + 15, y);
+    y += 55;
+
+    // Description - italic style
+    M5.Display.setFont(&fonts::FreeSerif18pt7b);
     String desc = capitalizeFirst(current.description);
     M5.Display.drawString(desc.c_str(), centerX, y);
     y += 45;
 
-    // Details row
-    M5.Display.setTextSize(2);
-    String details = "Feels " + String((int)round(current.feelsLike)) + "  " +
-                     String(current.humidity) + "%  " +
-                     String((int)round(current.windSpeed)) + "mph";
+    // Details in an elegant layout
+    M5.Display.setFont(&fonts::FreeSerif12pt7b);
+
+    // Feels like
+    String feels = "Feels like " + String((int)round(current.feelsLike)) + "'";
+    M5.Display.drawString(feels.c_str(), centerX, y);
+    y += 30;
+
+    // Humidity and Wind on same line with bullet separator
+    String details = String(current.humidity) + "% humidity  \xb7  " +
+                     String((int)round(current.windSpeed)) + " mph wind";
     M5.Display.drawString(details.c_str(), centerX, y);
 
     M5.Display.setTextDatum(TL_DATUM);
 
-    // Separator line
-    M5.Display.drawLine(10, hourlyY - 8, SCREEN_W - 10, hourlyY - 8, TFT_BLACK);
+    // Elegant separator - centered decorative line
+    int lineY = hourlyY - 15;
+    M5.Display.drawLine(50, lineY, SCREEN_W - 50, lineY, TFT_BLACK);
+    // Small diamond decoration in center
+    int diamondX = centerX;
+    M5.Display.fillTriangle(diamondX, lineY - 6, diamondX - 6, lineY, diamondX, lineY + 6, TFT_BLACK);
+    M5.Display.fillTriangle(diamondX, lineY - 6, diamondX + 6, lineY, diamondX, lineY + 6, TFT_BLACK);
 }
 
 void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
@@ -171,10 +202,10 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
 
     int y = hourlyY;
 
-    // Section title
-    M5.Display.setTextSize(2);
-    M5.Display.drawString("HOURLY", 15, y);
-    y += 24;
+    // Section title - elegant small caps style
+    M5.Display.setFont(&fonts::FreeSerif9pt7b);
+    M5.Display.drawString("H O U R L Y   F O R E C A S T", 130, y);
+    y += 28;
 
     // Calculate column positions (5 columns)
     int cols = min(count, 5);
@@ -184,7 +215,7 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
     for (int i = 0; i < cols && i < count; i++) {
         int colX = startX + i * colWidth + colWidth / 2;
 
-        // Time label
+        // Time label - elegant
         String timeLabel;
         if (i == 0) {
             timeLabel = "Now";
@@ -193,24 +224,28 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
         }
 
         M5.Display.setTextDatum(TC_DATUM);
-        M5.Display.setTextSize(2);
+        M5.Display.setFont(&fonts::FreeSerif9pt7b);
         M5.Display.drawString(timeLabel.c_str(), colX, y);
 
-        // Weather icon
-        int iconSize = 40;
-        drawWeatherIcon(colX - iconSize / 2, y + 22, iconSize, hourly[i].weatherId);
+        // Weather icon - more detailed
+        int iconSize = 48;
+        drawWeatherIcon(colX - iconSize / 2, y + 18, iconSize, hourly[i].weatherId);
 
-        // Temperature
-        M5.Display.setTextSize(4);
-        String temp = String((int)round(hourly[i].temp));
-        M5.Display.drawString(temp.c_str(), colX, y + 70);
+        // Temperature - bold serif
+        M5.Display.setFont(&fonts::FreeSerifBold12pt7b);
+        String temp = String((int)round(hourly[i].temp)) + "'";
+        M5.Display.drawString(temp.c_str(), colX, y + 75);
     }
 
     M5.Display.setTextDatum(TL_DATUM);
-    M5.Display.setTextSize(2);
 
-    // Separator line
-    M5.Display.drawLine(10, dailyY - 8, SCREEN_W - 10, dailyY - 8, TFT_BLACK);
+    // Elegant separator
+    int lineY = dailyY - 15;
+    M5.Display.drawLine(50, lineY, SCREEN_W - 50, lineY, TFT_BLACK);
+    // Small diamond decoration
+    int diamondX = SCREEN_W / 2;
+    M5.Display.fillTriangle(diamondX, lineY - 6, diamondX - 6, lineY, diamondX, lineY + 6, TFT_BLACK);
+    M5.Display.fillTriangle(diamondX, lineY - 6, diamondX + 6, lineY, diamondX, lineY + 6, TFT_BLACK);
 }
 
 void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
@@ -218,67 +253,78 @@ void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
 
     int y = dailyY;
 
-    // Section title
-    M5.Display.setTextSize(2);
-    M5.Display.drawString("DAILY", 15, y);
-    y += 28;
+    // Section title - elegant small caps
+    M5.Display.setFont(&fonts::FreeSerif9pt7b);
+    M5.Display.drawString("E X T E N D E D   F O R E C A S T", 115, y);
+    y += 30;
 
     // Calculate row height
-    int availableHeight = footerY - y - 15;
+    int availableHeight = footerY - y - 20;
     int rowHeight = availableHeight / min(count, 6);
 
     for (int i = 0; i < count && i < 6; i++) {
         int rowY = y + i * rowHeight;
 
-        // Day name (left)
-        M5.Display.setTextSize(3);
+        // Day name (left) - elegant serif
+        M5.Display.setFont(&fonts::FreeSerifBold12pt7b);
         String dayName = getDayName(daily[i].timestamp);
-        M5.Display.drawString(dayName.c_str(), 15, rowY + 10);
+        M5.Display.drawString(dayName.c_str(), 25, rowY + 12);
 
-        // Weather icon
-        int iconSize = 38;
-        drawWeatherIcon(90, rowY + 4, iconSize, daily[i].weatherId);
+        // Weather icon - detailed
+        int iconSize = 42;
+        drawWeatherIcon(100, rowY + 2, iconSize, daily[i].weatherId);
 
-        // Description (middle) - truncate if needed
-        M5.Display.setTextSize(2);
+        // Description (middle) - italic style
+        M5.Display.setFont(&fonts::FreeSerif9pt7b);
         String desc = capitalizeFirst(daily[i].description);
-        if (desc.length() > 10) {
-            desc = desc.substring(0, 8) + "..";
+        if (desc.length() > 12) {
+            desc = desc.substring(0, 10) + "..";
         }
-        M5.Display.drawString(desc.c_str(), 140, rowY + 14);
+        M5.Display.drawString(desc.c_str(), 155, rowY + 16);
 
-        // Precipitation % (if significant)
+        // Precipitation % (if significant) - with raindrop hint
         if (daily[i].pop > 20) {
-            M5.Display.drawString(String(daily[i].pop) + "%", 290, rowY + 14);
+            M5.Display.setFont(&fonts::FreeSerif9pt7b);
+            M5.Display.drawString(String(daily[i].pop) + "%", 300, rowY + 16);
         }
 
-        // High/Low temps (right aligned)
-        M5.Display.setTextSize(4);
-        String highLow = String((int)round(daily[i].tempMax)) + "/" +
-                         String((int)round(daily[i].tempMin));
-        int tempWidth = M5.Display.textWidth(highLow.c_str());
-        M5.Display.drawString(highLow.c_str(), SCREEN_W - tempWidth - 15, rowY + 6);
+        // High/Low temps (right aligned) - elegant with slash
+        M5.Display.setFont(&fonts::FreeSerifBold12pt7b);
+        String highTemp = String((int)round(daily[i].tempMax)) + "'";
+        M5.Display.setTextDatum(TR_DATUM);
+        M5.Display.drawString(highTemp.c_str(), SCREEN_W - 80, rowY + 8);
 
-        // Subtle row divider
-        M5.Display.setTextSize(2);
+        M5.Display.setFont(&fonts::FreeSerif9pt7b);
+        M5.Display.drawString("/", SCREEN_W - 70, rowY + 12);
+
+        M5.Display.setFont(&fonts::FreeSerif12pt7b);
+        M5.Display.setTextDatum(TL_DATUM);
+        String lowTemp = String((int)round(daily[i].tempMin)) + "'";
+        M5.Display.drawString(lowTemp.c_str(), SCREEN_W - 60, rowY + 12);
+
+        // Elegant dotted row divider
         if (i < count - 1 && i < 5) {
-            M5.Display.drawLine(15, rowY + rowHeight - 3, SCREEN_W - 15, rowY + rowHeight - 3, TFT_LIGHTGRAY);
+            int dotY = rowY + rowHeight - 4;
+            for (int dx = 40; dx < SCREEN_W - 40; dx += 8) {
+                M5.Display.fillCircle(dx, dotY, 1, TFT_BLACK);
+            }
         }
     }
 }
 
 void DisplayManager::renderFooter() {
-    // Separator line
-    M5.Display.drawLine(0, footerY, SCREEN_W, footerY, TFT_BLACK);
+    // Decorative double line separator
+    M5.Display.drawLine(60, footerY, SCREEN_W - 60, footerY, TFT_BLACK);
+    M5.Display.drawLine(30, footerY + 4, SCREEN_W - 30, footerY + 4, TFT_BLACK);
 
-    // Last update time (centered)
+    // Last update time (centered) - elegant italic style
     time_t now;
     time(&now);
 
-    M5.Display.setTextSize(2);
+    M5.Display.setFont(&fonts::FreeSerif9pt7b);
     M5.Display.setTextDatum(MC_DATUM);
-    String updateStr = "Updated " + formatDate(now) + " " + formatTime(now);
-    M5.Display.drawString(updateStr.c_str(), SCREEN_W / 2, footerY + 18);
+    String updateStr = "Last updated " + formatDate(now) + " at " + formatTime(now);
+    M5.Display.drawString(updateStr.c_str(), SCREEN_W / 2, footerY + 28);
     M5.Display.setTextDatum(TL_DATUM);
 }
 
@@ -312,19 +358,28 @@ void DisplayManager::drawSunIcon(int x, int y, int size) {
     int cy = y + size / 2;
     int r = size / 4;
 
-    // Sun circle (filled)
+    // Sun circle with gradient effect (concentric circles)
     M5.Display.fillCircle(cx, cy, r, TFT_BLACK);
+    M5.Display.drawCircle(cx, cy, r + 2, TFT_BLACK);
 
-    // Rays
-    int rayLen = size * 2 / 5;
-    int rayGap = r + 2;
-    for (int i = 0; i < 8; i++) {
-        float angle = i * PI / 4;
+    // Elegant rays - alternating long and short
+    int rayLenLong = size * 2 / 5;
+    int rayLenShort = size / 3;
+    int rayGap = r + 4;
+
+    for (int i = 0; i < 12; i++) {
+        float angle = i * PI / 6;
+        int rayLen = (i % 2 == 0) ? rayLenLong : rayLenShort;
         int x1 = cx + cos(angle) * rayGap;
         int y1 = cy + sin(angle) * rayGap;
         int x2 = cx + cos(angle) * rayLen;
         int y2 = cy + sin(angle) * rayLen;
+
+        // Thicker rays for main directions
         M5.Display.drawLine(x1, y1, x2, y2, TFT_BLACK);
+        if (i % 3 == 0) {
+            M5.Display.drawLine(x1 + 1, y1, x2 + 1, y2, TFT_BLACK);
+        }
     }
 }
 
@@ -333,8 +388,18 @@ void DisplayManager::drawMoonIcon(int x, int y, int size) {
     int cy = y + size / 2;
     int r = size / 3;
 
+    // Crescent moon with elegant curve
     M5.Display.fillCircle(cx, cy, r, TFT_BLACK);
-    M5.Display.fillCircle(cx + r * 0.6, cy - r * 0.3, r * 0.85, TFT_WHITE);
+    M5.Display.fillCircle(cx + r * 0.55, cy - r * 0.25, r * 0.82, TFT_WHITE);
+
+    // Add subtle stars around moon
+    int starSize = max(2, size / 20);
+    // Star 1
+    drawStar(cx - r - starSize * 2, cy - r / 2, starSize);
+    // Star 2
+    drawStar(cx + r / 2, cy - r - starSize, starSize - 1);
+    // Star 3
+    drawStar(cx - r / 2, cy + r, starSize - 1);
 }
 
 void DisplayManager::drawCloudIcon(int x, int y, int size) {
@@ -342,87 +407,185 @@ void DisplayManager::drawCloudIcon(int x, int y, int size) {
     int cy = y + size / 2;
     int r = size / 5;
 
-    // Cloud shape
-    M5.Display.fillCircle(cx - r, cy + r/2, r, TFT_BLACK);
-    M5.Display.fillCircle(cx, cy - r/3, r * 1.3, TFT_BLACK);
-    M5.Display.fillCircle(cx + r, cy + r/2, r, TFT_BLACK);
-    M5.Display.fillRect(cx - r, cy + r/2, r * 2, r, TFT_BLACK);
+    // Fluffy cloud with multiple bumps for more natural look
+    // Bottom base
+    M5.Display.fillCircle(cx - r * 1.2, cy + r * 0.4, r * 0.9, TFT_BLACK);
+    M5.Display.fillCircle(cx + r * 1.2, cy + r * 0.4, r * 0.9, TFT_BLACK);
+
+    // Middle bumps
+    M5.Display.fillCircle(cx - r * 0.5, cy - r * 0.2, r * 1.1, TFT_BLACK);
+    M5.Display.fillCircle(cx + r * 0.5, cy, r * 1.0, TFT_BLACK);
+
+    // Top bump
+    M5.Display.fillCircle(cx, cy - r * 0.5, r * 1.2, TFT_BLACK);
+
+    // Fill gaps
+    M5.Display.fillRect(cx - r * 1.2, cy + r * 0.3, r * 2.4, r * 0.8, TFT_BLACK);
+
+    // Outline for definition
+    M5.Display.drawCircle(cx, cy - r * 0.5, r * 1.2, TFT_BLACK);
 }
 
 void DisplayManager::drawRainIcon(int x, int y, int size) {
-    drawCloudIcon(x, y - size/6, size * 0.8);
+    drawCloudIcon(x, y - size/6, size * 0.75);
 
-    // Rain drops
-    int dropY = y + size / 2;
+    // Elegant raindrops - teardrop shape
+    int dropStartY = y + size / 2 - 5;
     int cx = x + size / 2;
+    int dropLen = size / 4;
+
     for (int i = -1; i <= 1; i++) {
-        int dx = cx + i * size / 5;
-        M5.Display.drawLine(dx, dropY, dx - 4, dropY + size/4, TFT_BLACK);
-        M5.Display.drawLine(dx - 1, dropY, dx - 5, dropY + size/4, TFT_BLACK);
+        int dx = cx + i * size / 4;
+        int dy = dropStartY + (i == 0 ? 0 : 5);  // Stagger drops
+
+        // Teardrop shape
+        M5.Display.fillCircle(dx, dy + dropLen, size / 15 + 1, TFT_BLACK);
+        M5.Display.fillTriangle(
+            dx, dy,
+            dx - size / 15 - 1, dy + dropLen,
+            dx + size / 15 + 1, dy + dropLen,
+            TFT_BLACK
+        );
     }
 }
 
 void DisplayManager::drawSnowIcon(int x, int y, int size) {
-    drawCloudIcon(x, y - size/6, size * 0.8);
+    drawCloudIcon(x, y - size/6, size * 0.75);
 
-    // Snowflakes - scale based on icon size
+    // Elegant snowflakes
     int flakeY = y + size / 2;
     int cx = x + size / 2;
-    int dotSize = max(1, size / 15);
-    for (int i = -1; i <= 1; i++) {
-        M5.Display.fillCircle(cx + i * size/5, flakeY + 3, dotSize, TFT_BLACK);
-        M5.Display.fillCircle(cx + i * size/5 - 3, flakeY + size/4, dotSize, TFT_BLACK);
-    }
+    int flakeSize = max(4, size / 8);
+
+    // Draw three snowflakes at different positions
+    drawSnowflake(cx - size / 4, flakeY, flakeSize);
+    drawSnowflake(cx + size / 5, flakeY + flakeSize, flakeSize - 1);
+    drawSnowflake(cx, flakeY + flakeSize * 2, flakeSize - 1);
 }
 
 void DisplayManager::drawThunderIcon(int x, int y, int size) {
-    drawCloudIcon(x, y - size/6, size * 0.8);
+    drawCloudIcon(x, y - size/6, size * 0.75);
 
-    // Lightning bolt
+    // Elegant lightning bolt - zigzag shape
     int bx = x + size / 2;
-    int by = y + size / 2;
+    int by = y + size / 2 - 5;
+    int boltWidth = size / 6;
+    int boltHeight = size / 3;
 
-    M5.Display.fillTriangle(bx, by, bx - 8, by + 12, bx + 4, by + 10, TFT_BLACK);
-    M5.Display.fillTriangle(bx - 4, by + 8, bx - 10, by + 22, bx + 2, by + 14, TFT_BLACK);
+    // Main bolt shape
+    M5.Display.fillTriangle(
+        bx - boltWidth / 2, by,
+        bx + boltWidth, by + boltHeight / 2,
+        bx, by + boltHeight / 2,
+        TFT_BLACK
+    );
+    M5.Display.fillTriangle(
+        bx + boltWidth / 2, by + boltHeight / 2 - 2,
+        bx - boltWidth / 2, by + boltHeight,
+        bx, by + boltHeight / 2 - 2,
+        TFT_BLACK
+    );
+
+    // Bolt outline for definition
+    M5.Display.drawLine(bx - boltWidth / 2, by, bx + boltWidth, by + boltHeight / 2, TFT_BLACK);
+    M5.Display.drawLine(bx + boltWidth / 2, by + boltHeight / 2 - 2, bx - boltWidth / 2, by + boltHeight, TFT_BLACK);
 }
 
 void DisplayManager::drawFogIcon(int x, int y, int size) {
-    int cy = y + size / 3;
+    int cy = y + size / 4;
     int lineSpacing = size / 5;
 
+    // Wavy fog lines for more artistic look
     for (int i = 0; i < 4; i++) {
-        int sx = (i % 2 == 0) ? x + 8 : x + 18;
-        int ex = (i % 2 == 0) ? x + size - 18 : x + size - 8;
         int ly = cy + i * lineSpacing;
-        M5.Display.drawLine(sx, ly, ex, ly, TFT_BLACK);
-        M5.Display.drawLine(sx, ly + 1, ex, ly + 1, TFT_BLACK);
+        int startX = x + (i % 2 == 0 ? 5 : 15);
+        int endX = x + size - (i % 2 == 0 ? 15 : 5);
+
+        // Draw wavy line using small segments
+        for (int wx = startX; wx < endX - 5; wx += 3) {
+            int waveOffset = (int)(sin((wx - startX) * 0.15) * 2);
+            M5.Display.fillCircle(wx, ly + waveOffset, 2, TFT_BLACK);
+        }
     }
 }
 
 void DisplayManager::drawPartlyCloudyIcon(int x, int y, int size, bool isNight) {
-    // Sun/moon in background (smaller, offset)
+    // Sun/moon in background (smaller, offset to upper left)
     if (isNight) {
-        drawMoonIcon(x, y - size/8, size * 0.6);
+        // Simple moon for background
+        int mx = x + size / 6;
+        int my = y + size / 6;
+        int mr = size / 5;
+        M5.Display.fillCircle(mx, my, mr, TFT_BLACK);
+        M5.Display.fillCircle(mx + mr * 0.5, my - mr * 0.2, mr * 0.8, TFT_WHITE);
     } else {
-        drawSunIcon(x, y - size/8, size * 0.6);
+        // Simple sun for background
+        int sx = x + size / 5;
+        int sy = y + size / 5;
+        int sr = size / 7;
+        M5.Display.fillCircle(sx, sy, sr, TFT_BLACK);
+        // A few rays peeking out
+        for (int i = 0; i < 6; i++) {
+            float angle = i * PI / 3 - PI / 6;
+            int x1 = sx + cos(angle) * (sr + 2);
+            int y1 = sy + sin(angle) * (sr + 2);
+            int x2 = sx + cos(angle) * (sr + size / 10);
+            int y2 = sy + sin(angle) * (sr + size / 10);
+            M5.Display.drawLine(x1, y1, x2, y2, TFT_BLACK);
+        }
     }
 
-    // Cloud in foreground (offset down-right)
-    int cloudX = x + size / 4;
-    int cloudY = y + size / 4;
-    int cs = size * 0.7;
-    int r = cs / 5;
+    // Cloud in foreground (offset down-right) - elegant fluffy cloud
+    int cloudX = x + size / 3;
+    int cloudY = y + size / 3;
+    int r = size / 7;
 
-    // White background to cover sun
-    M5.Display.fillCircle(cloudX + cs/2 - r, cloudY + cs/2, r + 3, TFT_WHITE);
-    M5.Display.fillCircle(cloudX + cs/2, cloudY + cs/3, r * 1.3 + 3, TFT_WHITE);
-    M5.Display.fillCircle(cloudX + cs/2 + r, cloudY + cs/2, r + 3, TFT_WHITE);
+    // White background to cleanly cover sun/moon
+    M5.Display.fillCircle(cloudX, cloudY + r / 2, r + 4, TFT_WHITE);
+    M5.Display.fillCircle(cloudX + r, cloudY - r / 4, r * 1.2 + 4, TFT_WHITE);
+    M5.Display.fillCircle(cloudX + r * 2, cloudY + r / 2, r + 4, TFT_WHITE);
+    M5.Display.fillRect(cloudX - r / 2, cloudY + r / 2, r * 3, r, TFT_WHITE);
 
-    // Cloud shape
-    M5.Display.fillCircle(cloudX + cs/2 - r, cloudY + cs/2, r, TFT_BLACK);
-    M5.Display.fillCircle(cloudX + cs/2, cloudY + cs/3, r * 1.3, TFT_BLACK);
-    M5.Display.fillCircle(cloudX + cs/2 + r, cloudY + cs/2, r, TFT_BLACK);
-    M5.Display.fillRect(cloudX + cs/2 - r, cloudY + cs/2, r * 2, r, TFT_BLACK);
+    // Cloud outline for elegant look
+    M5.Display.fillCircle(cloudX, cloudY + r / 2, r, TFT_BLACK);
+    M5.Display.fillCircle(cloudX + r, cloudY - r / 4, r * 1.2, TFT_BLACK);
+    M5.Display.fillCircle(cloudX + r * 2, cloudY + r / 2, r, TFT_BLACK);
+    M5.Display.fillRect(cloudX, cloudY + r / 2, r * 2, r, TFT_BLACK);
+}
+
+// Helper function - draw a small star
+void DisplayManager::drawStar(int x, int y, int size) {
+    // Simple 4-point star
+    M5.Display.drawLine(x - size, y, x + size, y, TFT_BLACK);
+    M5.Display.drawLine(x, y - size, x, y + size, TFT_BLACK);
+    // Diagonal lines for 8-point effect
+    int d = size * 0.7;
+    M5.Display.drawLine(x - d, y - d, x + d, y + d, TFT_BLACK);
+    M5.Display.drawLine(x + d, y - d, x - d, y + d, TFT_BLACK);
+}
+
+// Helper function - draw an elegant snowflake
+void DisplayManager::drawSnowflake(int x, int y, int size) {
+    // 6-armed snowflake
+    for (int i = 0; i < 6; i++) {
+        float angle = i * PI / 3;
+        int x2 = x + cos(angle) * size;
+        int y2 = y + sin(angle) * size;
+        M5.Display.drawLine(x, y, x2, y2, TFT_BLACK);
+
+        // Small branches on each arm
+        if (size > 3) {
+            float branchAngle1 = angle + PI / 6;
+            float branchAngle2 = angle - PI / 6;
+            int bx = x + cos(angle) * size * 0.6;
+            int by = y + sin(angle) * size * 0.6;
+            int bLen = size * 0.4;
+            M5.Display.drawLine(bx, by, bx + cos(branchAngle1) * bLen, by + sin(branchAngle1) * bLen, TFT_BLACK);
+            M5.Display.drawLine(bx, by, bx + cos(branchAngle2) * bLen, by + sin(branchAngle2) * bLen, TFT_BLACK);
+        }
+    }
+    // Center dot
+    M5.Display.fillCircle(x, y, 1, TFT_BLACK);
 }
 
 // Utility functions

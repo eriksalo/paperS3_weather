@@ -57,6 +57,8 @@ private:
     void drawThunderIcon(int x, int y, int size);
     void drawFogIcon(int x, int y, int size);
     void drawPartlyCloudyIcon(int x, int y, int size, bool isNight = false);
+    void drawStar(int x, int y, int size);
+    void drawSnowflake(int x, int y, int size);
 
     // Utility functions
     String getDayName(time_t timestamp);
