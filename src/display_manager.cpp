@@ -71,14 +71,14 @@ void DisplayManager::renderError(const String& message) {
     M5.Display.drawRoundRect(52, centerY - 98, SCREEN_W - 104, 196, 8, TFT_BLACK);
 
     M5.Display.setTextDatum(MC_DATUM);
-    M5.Display.setFont(&fonts::FreeSansBold12pt7b);
-    M5.Display.drawString("Error", centerX, centerY - 45);
+    M5.Display.setFont(&fonts::FreeSansBold9pt7b);
+    M5.Display.drawString("Error", centerX, centerY - 40);
 
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
-    M5.Display.drawString(message.c_str(), centerX, centerY + 10);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    M5.Display.drawString(message.c_str(), centerX, centerY + 5);
 
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
-    M5.Display.drawString("Will retry in 5 minutes", centerX, centerY + 50);
+    M5.Display.drawString("Will retry in 5 minutes", centerX, centerY + 40);
 
     M5.Display.setTextDatum(TL_DATUM);
     update();
@@ -91,11 +91,11 @@ void DisplayManager::renderStatus(const String& message) {
     int centerY = SCREEN_H / 2;
 
     // Decorative elements
-    M5.Display.drawLine(centerX - 100, centerY - 30, centerX + 100, centerY - 30, TFT_BLACK);
-    M5.Display.drawLine(centerX - 80, centerY + 30, centerX + 80, centerY + 30, TFT_BLACK);
+    M5.Display.drawLine(centerX - 100, centerY - 25, centerX + 100, centerY - 25, TFT_BLACK);
+    M5.Display.drawLine(centerX - 80, centerY + 25, centerX + 80, centerY + 25, TFT_BLACK);
 
     M5.Display.setTextDatum(MC_DATUM);
-    M5.Display.setFont(&fonts::FreeSansBold12pt7b);
+    M5.Display.setFont(&fonts::FreeSansBold9pt7b);
     M5.Display.drawString(message.c_str(), centerX, centerY);
     M5.Display.setTextDatum(TL_DATUM);
 
@@ -121,9 +121,10 @@ void DisplayManager::renderHeader() {
         M5.Display.fillRoundRect(batX + 3, batY + 3, fillWidth, 16, 2, TFT_BLACK);
     }
 
-    // Battery percentage - modern font
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
-    M5.Display.drawString(String(batteryLevel) + "%", batX + 52, batY + 4);
+    // Battery percentage
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    M5.Display.drawString(String(batteryLevel) + "%", batX + 52, batY + 3);
 
     // Location name (center)
     M5.Display.setTextDatum(TC_DATUM);
@@ -134,7 +135,8 @@ void DisplayManager::renderHeader() {
     time_t now;
     time(&now);
     String timeStr = formatTime(now);
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
     M5.Display.setTextDatum(TR_DATUM);
     M5.Display.drawString(timeStr.c_str(), SCREEN_W - 15, 20);
     M5.Display.setTextDatum(TL_DATUM);
@@ -154,27 +156,28 @@ void DisplayManager::renderCurrentWeather(CurrentWeather& current) {
                     isNightTime(current.timestamp, current.sunrise, current.sunset));
     y += iconSize + 20;
 
-    // Temperature - large modern font
+    // Temperature - modern font
     M5.Display.setTextDatum(MC_DATUM);
-    M5.Display.setFont(&fonts::FreeSansBold18pt7b);
+    M5.Display.setFont(&fonts::FreeSansBold12pt7b);
     String tempStr = String((int)round(current.temp)) + "°F";
     M5.Display.drawString(tempStr.c_str(), centerX, y);
-    y += 42;
+    y += 35;
 
     // Description
     M5.Display.setFont(&fonts::FreeSans9pt7b);
     String desc = capitalizeFirst(current.description);
     M5.Display.drawString(desc.c_str(), centerX, y);
-    y += 28;
+    y += 25;
 
     // Feels like
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
-    String feels = "Feels like " + String((int)round(current.feelsLike)) + "°";
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    String feels = "Feels like " + String((int)round(current.feelsLike)) + "F";
     M5.Display.drawString(feels.c_str(), centerX, y);
-    y += 22;
+    y += 20;
 
     // Humidity and Wind
-    String details = String(current.humidity) + "% humidity  ·  " +
+    String details = String(current.humidity) + "% humidity  " +
                      String((int)round(current.windSpeed)) + " mph wind";
     M5.Display.drawString(details.c_str(), centerX, y);
 
@@ -193,10 +196,11 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
 
     int y = hourlyY;
 
-    // Section title - spaced letters
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
-    M5.Display.drawString("HOURLY", 20, y);
-    y += 22;
+    // Section title
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("HOURLY FORECAST", 20, y);
+    y += 15;
 
     // Calculate column positions (5 columns)
     int cols = min(count, 5);
@@ -215,17 +219,18 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
         }
 
         M5.Display.setTextDatum(TC_DATUM);
-        M5.Display.setFont(&fonts::FreeSans9pt7b);
+        M5.Display.setFont(&fonts::Font0);
+        M5.Display.setTextSize(2);
         M5.Display.drawString(timeLabel.c_str(), colX, y);
 
         // Weather icon
-        int iconSize = 40;
+        int iconSize = 36;
         drawWeatherIcon(colX - iconSize / 2, y + 18, iconSize, hourly[i].weatherId);
 
         // Temperature
         M5.Display.setFont(&fonts::FreeSansBold9pt7b);
         String temp = String((int)round(hourly[i].temp)) + "°";
-        M5.Display.drawString(temp.c_str(), colX, y + 65);
+        M5.Display.drawString(temp.c_str(), colX, y + 58);
     }
 
     M5.Display.setTextDatum(TL_DATUM);
@@ -244,9 +249,10 @@ void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
     int y = dailyY;
 
     // Section title
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(1);
     M5.Display.drawString("EXTENDED FORECAST", 20, y);
-    y += 24;
+    y += 18;
 
     // Calculate row height
     int availableHeight = footerY - y - 15;
@@ -256,33 +262,34 @@ void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
         int rowY = y + i * rowHeight;
 
         // Day name (left)
-        M5.Display.setFont(&fonts::FreeSansBold9pt7b);
+        M5.Display.setFont(&fonts::Font0);
+        M5.Display.setTextSize(2);
         String dayName = getDayName(daily[i].timestamp);
-        M5.Display.drawString(dayName.c_str(), 20, rowY + 12);
+        M5.Display.drawString(dayName.c_str(), 15, rowY + 10);
 
         // Weather icon
-        int iconSize = 36;
-        drawWeatherIcon(80, rowY + 4, iconSize, daily[i].weatherId);
+        int iconSize = 32;
+        drawWeatherIcon(70, rowY + 4, iconSize, daily[i].weatherId);
 
         // Description (middle)
-        M5.Display.setFont(&fonts::FreeSans9pt7b);
+        M5.Display.setTextSize(2);
         String desc = capitalizeFirst(daily[i].description);
-        if (desc.length() > 12) {
-            desc = desc.substring(0, 10) + "..";
+        if (desc.length() > 10) {
+            desc = desc.substring(0, 8) + "..";
         }
-        M5.Display.drawString(desc.c_str(), 130, rowY + 12);
+        M5.Display.drawString(desc.c_str(), 115, rowY + 10);
 
         // Precipitation % (if significant)
         if (daily[i].pop > 20) {
-            M5.Display.drawString(String(daily[i].pop) + "%", 280, rowY + 12);
+            M5.Display.drawString(String(daily[i].pop) + "%", 260, rowY + 10);
         }
 
         // High/Low temps (right aligned)
         M5.Display.setFont(&fonts::FreeSansBold9pt7b);
-        String temps = String((int)round(daily[i].tempMax)) + "°/" +
-                       String((int)round(daily[i].tempMin)) + "°";
+        String temps = String((int)round(daily[i].tempMax)) + "/" +
+                       String((int)round(daily[i].tempMin));
         M5.Display.setTextDatum(TR_DATUM);
-        M5.Display.drawString(temps.c_str(), SCREEN_W - 15, rowY + 10);
+        M5.Display.drawString(temps.c_str(), SCREEN_W - 15, rowY + 8);
         M5.Display.setTextDatum(TL_DATUM);
 
         // Elegant dotted row divider
@@ -304,10 +311,11 @@ void DisplayManager::renderFooter() {
     time_t now;
     time(&now);
 
-    M5.Display.setFont(&fonts::FreeSans9pt7b);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
     M5.Display.setTextDatum(MC_DATUM);
-    String updateStr = "Updated " + formatDate(now) + " at " + formatTime(now);
-    M5.Display.drawString(updateStr.c_str(), SCREEN_W / 2, footerY + 28);
+    String updateStr = "Updated " + formatDate(now) + " " + formatTime(now);
+    M5.Display.drawString(updateStr.c_str(), SCREEN_W / 2, footerY + 25);
     M5.Display.setTextDatum(TL_DATUM);
 }
 
