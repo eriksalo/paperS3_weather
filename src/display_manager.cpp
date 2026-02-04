@@ -9,10 +9,10 @@
 DisplayManager::DisplayManager() {
     // Calculate section positions for 540x960 portrait
     headerY = 0;
-    currentY = 70;           // After header
-    hourlyY = 400;           // After current weather
-    dailyY = 540;            // After hourly
-    footerY = SCREEN_H - 50; // Bottom footer
+    currentY = 65;           // After header
+    hourlyY = 320;           // After current weather (reduced gap)
+    dailyY = 430;            // After hourly (moved up)
+    footerY = SCREEN_H - 40; // Bottom footer
 }
 
 void DisplayManager::begin() {
@@ -54,7 +54,7 @@ void DisplayManager::renderWeather(WeatherData& weather) {
     renderHeader();
     renderCurrentWeather(weather.current);
     renderHourlyForecast(weather.hourly, min(weather.hourlyCount, 5));
-    renderDailyForecast(weather.daily, min(weather.dailyCount, 6));
+    renderDailyForecast(weather.daily, min(weather.dailyCount, 7));
     renderFooter();
 
     update();
@@ -255,10 +255,10 @@ void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
     y += 18;
 
     // Calculate row height
-    int availableHeight = footerY - y - 15;
-    int rowHeight = availableHeight / min(count, 6);
+    int availableHeight = footerY - y - 10;
+    int rowHeight = availableHeight / min(count, 7);
 
-    for (int i = 0; i < count && i < 6; i++) {
+    for (int i = 0; i < count && i < 7; i++) {
         int rowY = y + i * rowHeight;
 
         // Day name (left)
@@ -293,8 +293,8 @@ void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
         M5.Display.setTextDatum(TL_DATUM);
 
         // Elegant dotted row divider
-        if (i < count - 1 && i < 5) {
-            int dotY = rowY + rowHeight - 4;
+        if (i < count - 1 && i < 6) {
+            int dotY = rowY + rowHeight - 3;
             for (int dx = 40; dx < SCREEN_W - 40; dx += 8) {
                 M5.Display.fillCircle(dx, dotY, 1, TFT_BLACK);
             }
