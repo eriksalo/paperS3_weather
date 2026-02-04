@@ -159,7 +159,7 @@ void DisplayManager::renderCurrentWeather(CurrentWeather& current) {
     // Temperature - modern font
     M5.Display.setTextDatum(MC_DATUM);
     M5.Display.setFont(&fonts::FreeSansBold12pt7b);
-    String tempStr = String((int)round(current.temp)) + "°F";
+    String tempStr = String((int)round(current.temp)) + "F";
     M5.Display.drawString(tempStr.c_str(), centerX, y);
     y += 35;
 
@@ -229,7 +229,7 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
 
         // Temperature
         M5.Display.setFont(&fonts::FreeSansBold9pt7b);
-        String temp = String((int)round(hourly[i].temp)) + "°";
+        String temp = String((int)round(hourly[i].temp));
         M5.Display.drawString(temp.c_str(), colX, y + 58);
     }
 
