@@ -147,46 +147,52 @@ void DisplayManager::renderHeader() {
 }
 
 void DisplayManager::renderCurrentWeather(CurrentWeather& current) {
-    int centerX = SCREEN_W / 2;
+    int rightX = SCREEN_W * 2 / 3;  // Shift weather to right side
     int y = currentY + 10;
 
-    // Weather icon (centered) - detailed
-    int iconSize = 100;
-    drawWeatherIcon(centerX - iconSize / 2, y, iconSize, current.weatherId,
+    // "Salo Weather" label on left side
+    M5.Display.setFont(&fonts::FreeSans9pt7b);
+    M5.Display.setTextDatum(TL_DATUM);
+    M5.Display.drawString("Salo", 20, currentY + 45);
+    M5.Display.drawString("Weather", 20, currentY + 80);
+
+    // Weather icon (shifted right)
+    int iconSize = 90;
+    drawWeatherIcon(rightX - iconSize / 2, y, iconSize, current.weatherId,
                     isNightTime(current.timestamp, current.sunrise, current.sunset));
-    y += iconSize + 20;
+    y += iconSize + 15;
 
     // Temperature - modern font
     M5.Display.setTextDatum(MC_DATUM);
     M5.Display.setFont(&fonts::FreeSansBold12pt7b);
     String tempStr = String((int)round(current.temp)) + "F";
-    M5.Display.drawString(tempStr.c_str(), centerX, y);
-    y += 35;
+    M5.Display.drawString(tempStr.c_str(), rightX, y);
+    y += 32;
 
     // Description
     M5.Display.setFont(&fonts::FreeSans9pt7b);
     String desc = capitalizeFirst(current.description);
-    M5.Display.drawString(desc.c_str(), centerX, y);
-    y += 25;
+    M5.Display.drawString(desc.c_str(), rightX, y);
+    y += 22;
 
     // Feels like
     M5.Display.setFont(&fonts::Font0);
     M5.Display.setTextSize(2);
     String feels = "Feels like " + String((int)round(current.feelsLike)) + "F";
-    M5.Display.drawString(feels.c_str(), centerX, y);
-    y += 20;
+    M5.Display.drawString(feels.c_str(), rightX, y);
+    y += 18;
 
     // Humidity and Wind
     String details = String(current.humidity) + "% humidity  " +
                      String((int)round(current.windSpeed)) + " mph wind";
-    M5.Display.drawString(details.c_str(), centerX, y);
+    M5.Display.drawString(details.c_str(), rightX, y);
 
     M5.Display.setTextDatum(TL_DATUM);
 
     // Elegant separator with diamond
     int lineY = hourlyY - 12;
     M5.Display.drawLine(50, lineY, SCREEN_W - 50, lineY, TFT_BLACK);
-    int diamondX = centerX;
+    int diamondX = SCREEN_W / 2;
     M5.Display.fillTriangle(diamondX, lineY - 5, diamondX - 5, lineY, diamondX, lineY + 5, TFT_BLACK);
     M5.Display.fillTriangle(diamondX, lineY - 5, diamondX + 5, lineY, diamondX, lineY + 5, TFT_BLACK);
 }
@@ -202,35 +208,56 @@ void DisplayManager::renderHourlyForecast(HourlyForecast* hourly, int count) {
     M5.Display.drawString("HOURLY FORECAST", 20, y);
     y += 15;
 
+    // Target hours: 8am, noon, 4pm, 8pm, midnight
+    const int targetHours[] = {8, 12, 16, 20, 0};
+    const char* timeLabels[] = {"8am", "noon", "4pm", "8pm", "12am"};
+    const int numTargets = 5;
+
     // Calculate column positions (5 columns)
-    int cols = min(count, 5);
-    int colWidth = SCREEN_W / cols;
+    int colWidth = SCREEN_W / numTargets;
     int startX = 0;
 
-    for (int i = 0; i < cols && i < count; i++) {
-        int colX = startX + i * colWidth + colWidth / 2;
+    for (int t = 0; t < numTargets; t++) {
+        int colX = startX + t * colWidth + colWidth / 2;
 
-        // Time label - show actual time
-        String timeLabel;
-        if (i == 0) {
-            timeLabel = "Now";
-        } else {
-            timeLabel = formatHourlyTime(hourly[i].timestamp);
+        // Find forecast closest to target hour
+        int bestMatch = -1;
+        int bestDiff = 999;
+
+        for (int i = 0; i < count; i++) {
+            struct tm* timeinfo = localtime(&hourly[i].timestamp);
+            int hour = timeinfo->tm_hour;
+
+            // Calculate difference handling midnight wrap
+            int diff;
+            if (targetHours[t] == 0) {
+                // For midnight, check both directions
+                diff = min(abs(hour - 24), hour);
+            } else {
+                diff = abs(hour - targetHours[t]);
+            }
+
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestMatch = i;
+            }
         }
 
+        // Time label
         M5.Display.setTextDatum(TC_DATUM);
         M5.Display.setFont(&fonts::Font0);
         M5.Display.setTextSize(2);
-        M5.Display.drawString(timeLabel.c_str(), colX, y);
+        M5.Display.drawString(timeLabels[t], colX, y);
 
-        // Weather icon
-        int iconSize = 36;
-        drawWeatherIcon(colX - iconSize / 2, y + 18, iconSize, hourly[i].weatherId);
+        // Weather icon and temp (allow up to 3 hour difference for 3-hour API intervals)
+        if (bestMatch >= 0 && bestDiff <= 3) {
+            int iconSize = 36;
+            drawWeatherIcon(colX - iconSize / 2, y + 18, iconSize, hourly[bestMatch].weatherId);
 
-        // Temperature
-        M5.Display.setFont(&fonts::FreeSansBold9pt7b);
-        String temp = String((int)round(hourly[i].temp));
-        M5.Display.drawString(temp.c_str(), colX, y + 58);
+            M5.Display.setFont(&fonts::FreeSansBold9pt7b);
+            String temp = String((int)round(hourly[bestMatch].temp));
+            M5.Display.drawString(temp.c_str(), colX, y + 58);
+        }
     }
 
     M5.Display.setTextDatum(TL_DATUM);
@@ -261,35 +288,37 @@ void DisplayManager::renderDailyForecast(DailyForecast* daily, int count) {
     for (int i = 0; i < count && i < 7; i++) {
         int rowY = y + i * rowHeight;
 
-        // Day name (left)
+        // Day name (left) - larger font
         M5.Display.setFont(&fonts::Font0);
-        M5.Display.setTextSize(2);
+        M5.Display.setTextSize(3);
         String dayName = getDayName(daily[i].timestamp);
         M5.Display.drawString(dayName.c_str(), 15, rowY + 10);
 
         // Weather icon
-        int iconSize = 32;
-        drawWeatherIcon(70, rowY + 4, iconSize, daily[i].weatherId);
+        int iconSize = 40;
+        drawWeatherIcon(80, rowY, iconSize, daily[i].weatherId);
 
-        // Description (middle)
-        M5.Display.setTextSize(2);
+        // Description (middle) - larger font
+        M5.Display.setFont(&fonts::Font0);
+        M5.Display.setTextSize(3);
         String desc = capitalizeFirst(daily[i].description);
-        if (desc.length() > 10) {
-            desc = desc.substring(0, 8) + "..";
+        if (desc.length() > 18) {
+            desc = desc.substring(0, 16) + "..";
         }
-        M5.Display.drawString(desc.c_str(), 115, rowY + 10);
+        M5.Display.drawString(desc.c_str(), 130, rowY + 10);
 
         // Precipitation % (if significant)
         if (daily[i].pop > 20) {
-            M5.Display.drawString(String(daily[i].pop) + "%", 260, rowY + 10);
+            M5.Display.drawString(String(daily[i].pop) + "%", 310, rowY + 10);
         }
 
-        // High/Low temps (right aligned)
-        M5.Display.setFont(&fonts::FreeSansBold9pt7b);
+        // High/Low temps (right aligned) - larger font
+        M5.Display.setFont(&fonts::Font0);
+        M5.Display.setTextSize(3);
         String temps = String((int)round(daily[i].tempMax)) + "/" +
                        String((int)round(daily[i].tempMin));
         M5.Display.setTextDatum(TR_DATUM);
-        M5.Display.drawString(temps.c_str(), SCREEN_W - 15, rowY + 8);
+        M5.Display.drawString(temps.c_str(), SCREEN_W - 15, rowY + 10);
         M5.Display.setTextDatum(TL_DATUM);
 
         // Elegant dotted row divider

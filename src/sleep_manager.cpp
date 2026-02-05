@@ -71,11 +71,8 @@ void SleepManager::enterDeepSleep(int32_t seconds) {
     Serial.printf("Entering deep sleep for %d seconds...\n", seconds);
     Serial.flush();
 
-    // Use M5Stack's timer sleep (RTC-based)
-    M5.Power.timerSleep(seconds);
-
-    // If timerSleep returns (shouldn't normally), use ESP deep sleep as fallback
-    esp_sleep_enable_timer_wakeup(seconds * 1000000ULL);
+    // Use ESP32 native deep sleep timer (~7uA, works on both USB and battery)
+    esp_sleep_enable_timer_wakeup((uint64_t)seconds * 1000000ULL);
     esp_deep_sleep_start();
 }
 

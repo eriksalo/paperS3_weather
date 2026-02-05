@@ -7,7 +7,7 @@
 #include "sleep_manager.h"
 
 // DEBUG MODE - set to false for production
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 #define DEBUG_DELAY_MS 5000
 
 // Global objects
@@ -21,50 +21,17 @@ void disconnectWiFi();
 bool syncTime();
 
 void setup() {
-    // Long delay to allow serial monitor to connect
-    delay(5000);
-
     // Initialize M5Stack
     auto cfg = M5.config();
     cfg.serial_baudrate = 115200;
     M5.begin(cfg);
 
-    // Wait for serial and M5 to fully initialize
-    delay(2000);
+    // Brief delay for initialization
+    delay(500);
 
     Serial.println("\n========================================");
     Serial.println("M5Stack Paper S3 Weather Display");
-    Serial.println("DEBUG MODE ENABLED");
     Serial.println("========================================\n");
-
-    Serial.println("M5.begin() completed");
-    Serial.printf("Display size: %d x %d\n", M5.Display.width(), M5.Display.height());
-    Serial.printf("Display rotation: %d\n", M5.Display.getRotation());
-
-    // Simple display test FIRST
-    Serial.println("\n--- DISPLAY TEST ---");
-    Serial.println("Filling screen white...");
-    M5.Display.fillScreen(TFT_WHITE);
-    M5.Display.display();
-    delay(1000);
-
-    Serial.println("Drawing test text...");
-    M5.Display.setTextColor(TFT_BLACK);
-    M5.Display.setTextSize(3);
-    M5.Display.setCursor(50, 100);
-    M5.Display.println("DISPLAY TEST");
-    M5.Display.setCursor(50, 200);
-    M5.Display.println("If you see this");
-    M5.Display.setCursor(50, 300);
-    M5.Display.println("display works!");
-    M5.Display.display();
-
-    Serial.println("Test text drawn - check display!");
-    Serial.println("Waiting 10 seconds...\n");
-    delay(10000);
-
-    // Now continue with normal init
-    Serial.println("Continuing with normal initialization...");
 
     // Initialize display manager
     display.begin();
@@ -200,28 +167,42 @@ void disconnectWiFi() {
 }
 
 bool syncTime() {
-    // Configure NTP
-    configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
+    // Multiple NTP servers for reliability
+    const char* ntpServers[] = {
+        "pool.ntp.org",
+        "time.nist.gov",
+        "time.google.com"
+    };
+    const int numServers = 3;
 
-    Serial.print("Waiting for NTP time sync");
+    for (int server = 0; server < numServers; server++) {
+        Serial.printf("Trying NTP server: %s\n", ntpServers[server]);
 
-    // Wait for time to be set (max 30 seconds)
-    int retry = 0;
-    const int maxRetries = 60;
+        // Configure NTP with current server
+        configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, ntpServers[server]);
 
-    while (!sleepMgr.isTimeSynced() && retry < maxRetries) {
-        delay(500);
-        Serial.print(".");
-        retry++;
+        Serial.print("Waiting for NTP time sync");
+
+        // Wait for time to be set (max 15 seconds per server)
+        int retry = 0;
+        const int maxRetries = 30;
+
+        while (!sleepMgr.isTimeSynced() && retry < maxRetries) {
+            delay(500);
+            Serial.print(".");
+            retry++;
+        }
+
+        Serial.println();
+
+        if (sleepMgr.isTimeSynced()) {
+            Serial.println("Time synchronized!");
+            return true;
+        }
+
+        Serial.println("Server timeout, trying next...");
     }
 
-    Serial.println();
-
-    if (!sleepMgr.isTimeSynced()) {
-        Serial.println("NTP sync timeout!");
-        return false;
-    }
-
-    Serial.println("Time synchronized!");
-    return true;
+    Serial.println("All NTP servers failed!");
+    return false;
 }

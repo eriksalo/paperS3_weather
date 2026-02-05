@@ -1,13 +1,19 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// WiFi Configuration
-#define WIFI_SSID "SALO"
-#define WIFI_PASSWORD "eriklori"
+// WiFi Configuration (set in .env file)
+#ifndef WIFI_SSID
+#error "WIFI_SSID not defined - create .env file from .env.example"
+#endif
+#ifndef WIFI_PASSWORD
+#error "WIFI_PASSWORD not defined - create .env file from .env.example"
+#endif
 #define WIFI_TIMEOUT_MS 30000
 
-// OpenWeatherMap API Configuration
-#define OWM_API_KEY "43c5433daa47204b13788c8190bf45da"
+// OpenWeatherMap API Configuration (key set in .env file)
+#ifndef OWM_API_KEY
+#error "OWM_API_KEY not defined - create .env file from .env.example"
+#endif
 #define OWM_API_HOST "api.openweathermap.org"
 
 // Location: Longmont, Colorado
